@@ -17,6 +17,7 @@ import sys
 
 import ISY.IsyExceptionClass as IsyE
 from ISY.IsyEvent import ISYEvent
+import collections
 
 # import IsyExceptionClass as IsyE
 # from IsyEvent import ISYEvent
@@ -108,7 +109,7 @@ def _read_event(self, evnt_dat, *arg):
 
     # print("evnt_dat ", evnt_dat)
 
-    control_val = _action_val(evnt_dat["control"])
+    control_val = evnt_dat["control"]
     # action_val = _action_val(evnt_dat["action"])
 
     #
@@ -125,12 +126,16 @@ def _read_event(self, evnt_dat, *arg):
             event_targ = evnt_dat["node"]
 
             # create property if we do not have it yet
-            if control_val not in target_node["property"]:
+            if "n00" in event_targ:
+                #ignore polyglot devices for now, polyglot devices don't have target_node["property"]
+                pass
+            elif control_val not in target_node["property"]:
                 target_node["property"][control_val] = dict()
 
-            target_node["property"][control_val]["value"] \
+            if "n00" not in event_targ:
+                target_node["property"][control_val]["value"] \
                     = evnt_dat["action"]
-            target_node["property"][control_val]["formatted"] \
+                target_node["property"][control_val]["formatted"] \
                     = self._format_val(evnt_dat["action"])
 
             if self.debug & 0x10:

@@ -171,7 +171,7 @@ class Isy(IsyUtil):
         # _status_reload
         # node_rename,
 
-    from _isy_readevent import start_event_thread, stop_event_thread
+    from ._isy_readevent import start_event_thread, stop_event_thread, _read_event
 
     from ._isynet_resources import _load_networking, load_net_resource, \
         _net_resource_get_id, net_resource_run, \

@@ -12,14 +12,14 @@ __license__ = "BSD"
 import xml.etree.ElementTree as ET
 from .IsyVarClass import IsyVar
 import ISY.IsyExceptionClass as IsyE
-# from .IsyExceptionClass import IsyError, IsyInternalError, IsyValueError, \
-#                            IsyResponseError, IsyPropertyError, \
-#                            IsyLookupError, \
-#                            IsyRuntimeWarning, IsyWarning
+from .IsyExceptionClass import IsyError, IsyInternalError, IsyValueError, \
+                           IsyResponseError, IsyPropertyError, \
+                           IsyLookupError, \
+                           IsyRuntimeWarning, IsyWarning
 from warnings import warn
 
 
-# import pprint
+import pprint
 
 ##
 ## variable funtions
