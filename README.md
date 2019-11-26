@@ -15,9 +15,9 @@ Simple Python lib for the ISY home automation netapp Supporting a Simple and OO 
 
 
 The Goal / design concept is to provide a fast and simple to use interface
-supporting both object oriented and procedural methods
+supporting both object oriented and procedural methods.
 
-Also Supports real time cache updating by optionally running a sub-thread subscribing to event stream )
+Also supports real time cache updating by optionally running a sub-thread subscribing to event stream.
 
 
 Note:
@@ -29,7 +29,7 @@ This is a work in progress ( so expect new features )
 
 see [/bin](/bin) for more examples
 
-nodes, programs and iay  vars can be controlled via objects or call methods.
+nodes, programs and isy  vars can be controlled via objects or call methods.
 
 Get and print the status for the node called "Garage Light"
 
@@ -57,7 +57,7 @@ and turn it off if it is on
 --
 
 Alternately you can obtain a Node's object by indexing
-a Isy obj my the node name or address
+a Isy obj by the node name or address
 
     import ISY
     myisy = ISY.Isy()
@@ -104,7 +104,7 @@ or
     garage_light = myisy["Garage Light"]
     garage_light.set_callback(mycall, "my extra args")
 
-or if your not passing extra arguments you can just :
+or if you're not passing extra arguments you can just :
 
     garage_light = myisy["Garage Light"]
     garage_light.set_callback = mycall
@@ -129,11 +129,11 @@ ISYlib-python Documentation
 ---------------------------
 [This needs to be updated]
 
-* [Using_Isy_Class](/docs/Using_Isy_Class.txt) This is the main class that used to represent the ISY device iitself
+* [Using_Isy_Class](/docs/Using_Isy_Class.txt) This is the main class that used to represent the ISY device itself
 
 * [Using_IsyNode_Class](/docs/Using_IsyNode_Class.txt) This class is used to represent and control individual Nodes ( aka: sensors and light switches ) 
 
-* [Using_IsyVar_Class](/docs/Using_IsyVar_Class.txt) This class is used to represent varabibles internal to the ISY
+* [Using_IsyVar_Class](/docs/Using_IsyVar_Class.txt) This class is used to represent variables internal to the ISY
 
 [![Analytics](https://ga-beacon.appspot.com/UA-63572697-1/evilpete/isylib)]
 =======
