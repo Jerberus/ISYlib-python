@@ -120,7 +120,7 @@ see also :
 and/or
     http://wiki.universal-devices.com/index.php?title=Main_Page
 
-NOTE: This Libaray is not written by or supported by universal devices
+NOTE: This Libray is not written by or supported by Universal Devices
 
 
 
