@@ -5,13 +5,16 @@ These funtions are accessable via the Isy class opj
 """
 
 # author : Peter Shipley <peter.shipley@gmail.com>
-# copyrigh :  Copyright (C) 2015 Peter Shipley
+# copyrigh :  Copyright (C) 2017 Peter Shipley
 # license : BSD
 
-from ISY.IsyExceptionClass import IsyInvalidCmdError, IsyResponseError
-from ISY.IsyProgramClass import IsyProgram
+from __future__ import print_function
+import ISY.IsyExceptionClass as IsyE
+# from .IsyExceptionClass import IsyInvalidCmdError, IsyResponseError
+# from past.builtins import long
+from .IsyProgramClass import IsyProgram
 import xml.etree.ElementTree as ET
-from warnings import warn
+# from warnings import warn
 
 
 ##
@@ -110,15 +113,16 @@ def get_prog(self, pname):
     else:
         if self.debug & 0x01:
             print("Isy get_prog no prog : \"%s\"" % progid)
-        raise LookupError("no prog : " + str(progid) )
+        raise LookupError("no prog : " + str(progid))
 
 def _prog_get_id(self, pname):
     """ Lookup prog value by name or ID
-    returns ISY Id  or None
+    returns ISY Id or None
     """
     if isinstance(pname, IsyProgram):
          return pname["id"]
-    if isinstance(pname, (int, long)):
+    # if isinstance(pname, (int, long)):
+    if isinstance(pname, (int)):
         p = "{0:04X}".format(pname)
     else:
         p = str(pname).strip()
@@ -134,12 +138,12 @@ def _prog_get_id(self, pname):
     return None
 
 def prog_get_path(self, pname):
-    " get path of parent names "
+    """ get path of parent names """
     if not self._progdict:
         self.load_prog()
     prog_id = self._prog_get_id(pname)
     if prog_id is None:
-        raise IsyValueError("prog_get_path: unknown program id : " + str(pname) )
+        raise IsyE.IsyValueError("prog_get_path: unknown program id : " + str(pname))
     return self._prog_get_path(prog_id)
 
 def _prog_get_path(self, prog_id):
@@ -169,7 +173,7 @@ def prog_get_src(self, pname):
     prog_id = self._prog_get_id(pname)
 
     if prog_id is None:
-        raise IsyValueError("prog_get_src: unknown program : " + str(prog_id) )
+        raise IsyE.IsyValueError("prog_get_src: unknown program : " + str(prog_id))
 
     r = self.soapcomm("GetSysConf", name="/CONF/D2D/" + prog_id + ".PGM")
 
@@ -219,12 +223,12 @@ def prog_comm(self, paddr, cmd):
     #print("self.name2control :", self.name2control)
 
     if not prog_id:
-        raise IsyValueError("prog_comm: unknown program id : " +
-            str(paddr) )
+        raise IsyE.IsyValueError("prog_comm: unknown program id : " +
+            str(paddr))
 
     if not cmd in prog_valid_comm:
-        raise IsyInvalidCmdError("prog_comm: unknown command : " +
-            str(cmd) )
+        raise IsyE.IsyInvalidCmdError("prog_comm: unknown command : " +
+            str(cmd))
 
     self._prog_comm(prog_id, cmd)
 
@@ -239,7 +243,7 @@ def _prog_comm(self, prog_id, cmd):
     resp = self._getXMLetree(xurl)
     #self._printXML(resp)
     if resp.attrib["succeeded"] != 'true':
-        raise IsyResponseError("ISY command error : prog_id=" +
+        raise IsyE.IsyResponseError("ISY command error : prog_id=" +
             str(prog_id) + " cmd=" + str(cmd))
 
 
@@ -251,17 +255,17 @@ def prog_rename(self, prog=None, progname=None):
     """
 
     if prog is None:
-        raise IsyValueError("prog_rename: program id is None")
+        raise IsyE.IsyValueError("prog_rename: program id is None")
 
     prog_id = self._prog_get_id(paddr)
 
     if prog_id is None:
-        raise IsyValueError("prog_rename: unknown program id : " + str(prog) )
+        raise IsyE.IsyValueError("prog_rename: unknown program id : " + str(prog))
 
     if not isinstance(progname, str):
-        raise IsyValueError("new program name should be string")
+        raise IsyE.IsyValueError("new program name should be string")
 
-    r = self._prog_rename(progid=prog_id, progname=progname )
+    r = self._prog_rename(progid=prog_id, progname=progname)
 
     if self._progdict is not None and progid in self._progdict:
         self._progdict[progid]['name'] = progname
@@ -277,7 +281,7 @@ def _prog_rename(self, progid=None, progname=None):
     """
 
     if not isinstance(progid, str):
-        raise IsyValueError("program Id should be string")
+        raise IsyE.IsyValueError("program Id should be string")
 
     prog_path="/CONF/D2D/{0}.PGM".format(progid)
 
@@ -287,16 +291,16 @@ def _prog_rename(self, progid=None, progname=None):
 #        fi.write(result)
 
     if result is None:
-        raise IsyResponseError("Error loading Sys Conf file {0}".format(prog_path))
+        raise IsyE.IsyResponseError("Error loading Sys Conf file {0}".format(prog_path))
 
     var_et = ET.fromstring(result)
 
     p = var_et.find("trigger/name")
-    if not p is None:
+    if p is not None:
         p.text = progname
     else:
         errorstr = "Internal Error, \"name\" element missing from D2D code :\n{0}\n".format(result)
-        raise IsyRuntimeWarning(errorstr)
+        raise IsyE.IsyRuntimeWarning(errorstr)
 
     # use method='html' to generate expanded empty elements
     new_prog_data = ET.tostring(var_et, method='html')

@@ -36,7 +36,7 @@ Files:
     bin/isy_net_res.py  - call registered net resorces on ISY
     bin/isy_net_wol.py  - send WOL to registered devices
 
-The example code included it ment to demonstrate API use with minimal
+The example code included it meant to demonstrate API use with minimal
 code for clarity.
 
 
@@ -86,21 +86,21 @@ if sys.hexversion < 0x2070100:
     sys.stderr.write("You need python 2.7.1 or later to run this script (ver={:0X})\n".format(sys.hexversion))
 
 __revision__ = "$Id$"
-__version__ = "0.1.20160710"
+__version__ = "0.1.20170829"
 __author__ = 'Peter Shipley <peter.shipley@gmail.com>'
-__copyright__ = "Copyright (C) 2016 Peter Shipley"
+__copyright__ = "Copyright (C) 2017 Peter Shipley"
 __license__ = "BSD"
 
 #
-# from ISY.IsyUtilClass import IsyUtil
+# from .IsyUtilClass import IsyUtil
 #
-from ISY.IsyClass import Isy, IsyGetArg
-from ISY.IsyDiscover import isy_discover
-from ISY.IsyNodeClass import IsyNode, IsyScene, IsyNodeFolder
-from ISY.IsyVarClass import IsyVar
-from ISY.IsyProgramClass import IsyProgram
-from ISY.IsyExceptionClass import IsyError
-from ISY.IsyDebug import *
+from .IsyClass import Isy, IsyGetArg
+from .IsyDiscover import isy_discover
+from .IsyNodeClass import IsyNode, IsyScene, IsyNodeFolder
+from .IsyVarClass import IsyVar
+from .IsyProgramClass import IsyProgram
+from .IsyExceptionClass import IsyError
+from .IsyDebug import *
 #
 
 

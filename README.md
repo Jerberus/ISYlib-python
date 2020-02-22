@@ -116,9 +116,12 @@ Callbacks are executed as a part of the event subthread
 --
 
 see also :
-    http://www.universal-devices.com/residential/
-and/or
-    http://wiki.universal-devices.com/index.php?title=Main_Page
+
+http://www.universal-devices.com/residential/
+
+and/ors
+
+http://wiki.universal-devices.com/index.php?title=Main_Page
 
 NOTE: This Libray is not written by or supported by Universal Devices
 

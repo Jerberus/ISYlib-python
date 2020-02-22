@@ -4,14 +4,18 @@ This is a subfile for IsyClass.py
 These funtions are accessable via the Isy class opj
 """
 
+from __future__ import print_function
+
 __author__ = 'Peter Shipley <peter.shipley@gmail.com>'
-__copyright__ = "Copyright (C) 2015 Peter Shipley"
+__copyright__ = "Copyright (C) 2017 Peter Shipley"
 __license__ = "BSD"
 
 
-from ISY.IsyNodeClass import IsyNode, IsyScene, IsyNodeFolder#, _IsyNodeBase
-from ISY.IsyUtilClass import IsySubClass
-from ISY.IsyExceptionClass import IsyPropertyError, IsyResponseError, IsyRuntimeWarning, IsyWarning, IsyCommunicationError, IsyInvalidCmdError, IsySoapError
+from .IsyNodeClass import IsyNode, IsyScene, IsyNodeFolder#, _IsyNodeBase
+from .IsyUtilClass import IsySubClass
+import ISY.IsyExceptionClass as IsyE
+#from .IsyExceptionClass import IsyPropertyError, IsyResponseError, IsyRuntimeWarning, \
+#    IsyWarning, IsyCommunicationError, IsyInvalidCmdError, IsySoapError
 
 import warnings
 # import string
@@ -20,7 +24,7 @@ import warnings
 ##
 ## Node funtions
 ##
-def load_nodes(self, reload=0):
+def load_nodes(self, rload=0):
     """ Load node list scene list and folder info
 
         args : none
@@ -29,23 +33,23 @@ def load_nodes(self, reload=0):
 
     """
     if not hasattr(self, '_nodedict') or not isinstance(self._nodedict, dict):
-         self._nodedict = dict()
+        self._nodedict = dict()
 #         current_node_set = None
 #     else:
-#         current_node_set = set( self._nodedict.viewkeys() )
+#         current_node_set = set(self._nodedict.viewkeys())
 
     if not hasattr(self, '_nodegroups') or not isinstance(self._nodegroups, dict):
-        self._nodegroups  = dict()
+        self._nodegroups = dict()
 #    else:
-#         current_node_set = self._nodegroups.viewkeys()
+#        current_node_set = self._nodegroups.viewkeys()
 
-    if reload or not hasattr(self, '_nodefolder') or not isinstance(self._nodefolder, dict):
-        self._nodefolder  = dict()
+    if rload or not hasattr(self, '_nodefolder') or not isinstance(self._nodefolder, dict):
+        self._nodefolder = dict()
 
-    if reload or not hasattr(self, '_folder2addr') or not isinstance(self._folder2addr, dict):
+    if rload or not hasattr(self, '_folder2addr') or not isinstance(self._folder2addr, dict):
         self._folder2addr = dict()
 
-    if reload or not hasattr(self, '_name2id') or not isinstance(self._name2id, dict):
+    if rload or not hasattr(self, '_name2id') or not isinstance(self._name2id, dict):
         self._name2id = dict()
 
     # self.nodeCdict = dict()
@@ -54,16 +58,16 @@ def load_nodes(self, reload=0):
         print("load_nodes")
     nodeinfo = self._getXMLetree("/rest/nodes")
     if nodeinfo is None:
-          raise IsyCommunicationError("Load Node Info Fail : " \
+        raise IsyE.IsyCommunicationError("Load Node Info Fail : " \
                               + self.error_str)
-    self._gen_folder_list(nodeinfo, reload=reload)
-    self._gen_nodedict(nodeinfo, reload=reload)
-    self._gen_nodegroups(nodeinfo, reload=reload)
+    self._gen_folder_list(nodeinfo, rload=rload)
+    self._gen_nodedict(nodeinfo, rload=rload)
+    self._gen_nodegroups(nodeinfo, rload=rload)
     # self._printdict(self._nodedict)
     # print("load_nodes self._node2addr : ", len(self._node2addr))
     self._gen_member_list()
 
-def _gen_member_list(self, reload=0):
+def _gen_member_list(self, rload=0):
     """ganerates node connecton lists
 
         internal function call
@@ -87,22 +91,22 @@ def _gen_member_list(self, reload=0):
                         foldr['parent'] in self._nodefolder:
                     if 'members' not in self._nodefolder[foldr['parent']]:
                         self._nodefolder[foldr['parent']]['members'] = list()
-                    self._nodefolder[foldr['parent']]['members'].append( foldr['address'])
+                    self._nodefolder[foldr['parent']]['members'].append(foldr['address'])
                 else:
                     # print("warn bad parenting foldr =", foldr)
                     warnings.warn("Bad Parent : Folder  {0} {1} : {2}".format( \
-                            foldr["name"], faddr, foldr['parent']), IsyRuntimeWarning)
+                                  foldr["name"], faddr, foldr['parent']), IsyRuntimeWarning)
 
         # Scenes can only belong to Folders
         for sa in self._nodegroups:
             s = self._nodegroups[sa]
             if "parent" in s:
-                if s['parent-type'] == '3' and  s['parent'] in self._nodefolder:
-                    self._nodefolder[s['parent']]['members'].append( s['address'])
+                if s['parent-type'] == '3' and s['parent'] in self._nodefolder:
+                    self._nodefolder[s['parent']]['members'].append(s['address'])
                 else:
                     # print("warn bad parenting s = ", s)
                     warnings.warn("Bad Parent : Scene  {0} {1} : {2}".format( \
-                            s["name"], sa, s['parent']), IsyRuntimeWarning)
+                                  s["name"], sa, s['parent']), IsyRuntimeWarning)
 
         # A Node can belong only to ONE and only ONE Folder or another Node
         for naddr in self._nodedict:
@@ -110,17 +114,17 @@ def _gen_member_list(self, reload=0):
             # print("n = ", n)
             if 'pnode' in n and n['pnode'] != n['address']:
                 if 'members' not in self._nodedict[n['pnode']]:
-                    self._nodedict[n['pnode']]['members'] = list ()
-                self._nodedict[n['pnode']]['members'].append( n['address'] )
+                    self._nodedict[n['pnode']]['members'] = list()
+                self._nodedict[n['pnode']]['members'].append(n['address'])
 
             if 'parent' in n:
                 if 'pnode' not in n or n['parent'] != n['pnode']:
                     if n['parent-type'] == 3:
                         if n['parent'] in self._nodefolder:
-                            self._nodefolder[n['parent']]['members'].append( n['address'])
+                            self._nodefolder[n['parent']]['members'].append(n['address'])
                     elif n['parent-type'] == 1:
                         if n['parent'] in self._nodegroups:
-                            self._nodegroups[n['parent']]['members'].add( n['address'])
+                            self._nodegroups[n['parent']]['members'].add(n['address'])
             # 'parent': '16 6C D2 1', 'parent-type': '1',
             # 'parent': '12743', 'parent-type': '3',
             # if n.pnode == n.parent and n.pnode == n.address
@@ -128,10 +132,10 @@ def _gen_member_list(self, reload=0):
 
 
 def node_releoad(self):
-    return self.load_nodes(reload=1)
+    return self.load_nodes(rload=1)
 
 
-def _gen_folder_list(self, nodeinfo, reload=0):
+def _gen_folder_list(self, nodeinfo, rload=0):
     """ generate folder dictionary for load_node() """
     # self._nodefolder = dict()
     # self._folder2addr = dict()
@@ -166,10 +170,10 @@ def _gen_folder_list(self, nodeinfo, reload=0):
         else:
             self._name2id[n] = ("folder", fprop["address"])
 
-    #self._printdict(self._nodefolder)
-    #self._printdict(self._folder2addr)
+    # self._printdict(self._nodefolder)
+    # self._printdict(self._folder2addr)
 
-def _gen_nodegroups(self, nodeinfo, reload=0):
+def _gen_nodegroups(self, nodeinfo, rload=0):
     """ generate scene / group dictionary for load_node() """
     # self._nodegroups = dict()
     self._groups2addr = dict()
@@ -211,7 +215,7 @@ def _gen_nodegroups(self, nodeinfo, reload=0):
                 n = gprop["name"]
                 if n in self._groups2addr:
                     warnings.warn("Duplicate group name {0} : {1} {2}".format(n, \
-                            str(gprop["address"]), self._groups2addr[n]), IsyRuntimeWarning)
+                                  str(gprop["address"]), self._groups2addr[n]), IsyRuntimeWarning)
                 else:
                     self._groups2addr[n] = str(gprop["address"])
 
@@ -225,8 +229,22 @@ def _gen_nodegroups(self, nodeinfo, reload=0):
             # should raise an exception ?
             self._printinfo(grp, "Error : no address in group :")
 
+# import pprint
+# def _status_reload(self):
+#    # print("self._nodedict = ", self._nodedict)
+#    resp = self._getXMLetree("/rest/status/")
+#    for inode in resp.iter('node'):
+#       if not 'id' in inode.attrib:
+#           continue
+#       n_id = inode.attrib['id']
+#
+#       print("self._nodedict = ", n_id)
+#       pprint.pprint(self._nodedict[n_id])
 
-def _gen_nodedict(self, nodeinfo, reload=0):
+
+
+
+def _gen_nodedict(self, nodeinfo, rload=0):
     """ generate node dictionary for load_node() """
     warn_dup_name_list = list()
     self._node2addr = dict()
@@ -272,7 +290,7 @@ def _gen_nodedict(self, nodeinfo, reload=0):
 
                 n = idict["name"]
                 if n in self._node2addr:
-                    warn_dup_name_list.append( (n ,idict["address"], self._name2id[n]) )
+                    warn_dup_name_list.append((n ,idict["address"], self._name2id[n]))
                     warn_mess = "Duplicate Node name \"{0}\" :".format(n) \
                                 + " \"{1}\"\n\t\"{2}\"".format(\
                                 n, idict["address"], self._node2addr[n])
@@ -283,8 +301,8 @@ def _gen_nodedict(self, nodeinfo, reload=0):
 
                 # thinking of replacing _node2addr with _name2id
                 # do to ease managment of the three node types
-                if not reload and n in self._name2id:
-                    warn_dup_name_list.append( (n ,idict["address"], self._name2id[n]) )
+                if not rload and n in self._name2id:
+                    warn_dup_name_list.append((n ,idict["address"], self._name2id[n]))
                     warn_mess = "Dup name2id (Node) \"{0}\" :".format(n) \
                                 + " \"{1}\"\n\t\"{2}\"".format(\
                                 n ,idict["address"], self._name2id[n])
@@ -297,7 +315,7 @@ def _gen_nodedict(self, nodeinfo, reload=0):
             # should raise an exception
             # self._printinfo(inode, "Error : no address in node :")
             warnings.warn("Error : no address in node", IsyRuntimeWarning)
-    #print("\n>>>>\t", self._nodedict, "\n<<<<<\n")
+    # print("\n>>>>\t", self._nodedict, "\n<<<<<\n")
 
 
 
@@ -306,7 +324,7 @@ def _gen_nodedict(self, nodeinfo, reload=0):
 #
 def node_names(self):
     """  access method for node names
-        returns a dict of ( Node names : Node address )
+        returns a dict of ( Node names : Node address)
     """
     if not self._node2addr:
         self.load_nodes()
@@ -314,7 +332,7 @@ def node_names(self):
 
 def scene_names(self):
     """ access method for scene names
-        returns a dict of ( Node names : Node address )
+        returns a dict of ( Node names : Node address)
     """
     if not self._groups2addr:
         self.load_nodes()
@@ -337,12 +355,12 @@ def scene_addrs(self):
     return self._nodegroups.viewkeys()
 
 def node_get_path(self, nodeid):
-    " get path of parent names "
+    """ get path of parent names """
     if not self._nodedict:
         self.load_node()
     node_type, node_id = self._node_get_id(nodeid)
     if not node_id:
-        raise IsyInvalidCmdError("node_path: unknown node : " + str(nodeid) )
+        raise IsyE.IsyInvalidCmdError("node_path: unknown node : " + str(nodeid))
 
     return self._node_get_path(node_id, node_type)
 
@@ -362,9 +380,9 @@ def _node_get_path(self, node_id, node_type):
 
     while "parent" in noded:
         if noded["parent-type"] == '3':
-            noded = self._nodefolder[ noded["parent"] ]
+            noded = self._nodefolder[noded["parent"]]
         elif noded["parent-type"] == '1':
-            noded = self._nodedict[ noded["parent"] ]
+            noded = self._nodedict[noded["parent"]]
         fpath = "/" + noded["name"] + fpath
 
     return fpath
@@ -403,10 +421,10 @@ def get_node(self, node_id):
 
     else:
         # print("Isy get_node no node : \"{!s:}\"".format(nodeid))
-        raise LookupError("no node such Node : " + str(nodeid) )
+        raise LookupError("no node such Node : " + str(nodeid))
 
     # should never get here
-    #print "And you may ask yourself-Well...How did I get here?"
+    # print("And you may ask yourself-Well...How did I get here?")
     return None
 
 
@@ -437,7 +455,7 @@ def _node_get_id(self, nid):
         self.load_nodes()
 
     if isinstance(nid, IsySubClass):
-         return nid["addr"]
+         return (nid.objtype, nid["addr"])
     else:
         n = str(nid).strip()
 
@@ -473,7 +491,7 @@ def _node_get_id(self, nid):
 
 
         # Fail #
-    #print("_node_get_id : " + n + " None")
+    # print("_node_get_id : " + n + " None")
     return(None, None)
 
 
@@ -499,24 +517,24 @@ def node_get_prop(self, naddr, prop_id):
 
     (nodetype, node_id) = self._node_get_id(naddr)
     if not node_id:
-        raise LookupError("node_get_prop: unknown node : " + str(naddr) )
+        raise LookupError("node_get_prop: unknown node : " + str(naddr))
 
     if prop_id:
         prop = prop_id
         if "isQueryAble" in self.controls[prop_id] and \
                 self.controls["prop_id"]["isQueryAble"] == "false":
-            raise IsyPropertyError("non Queryable property " + prop_id)
+            raise IsyE.IsyPropertyError("non Queryable property " + prop_id)
 
     if prop_id in ['ST', 'OL', 'RR']:
         if prop in self._nodedict[node_id]["property"]:
             return self._nodedict[node_id]["property"]["value"]
         else:
-            raise IsyPropertyError("unknown property " + prop_id)
+            raise IsyE.IsyPropertyError("unknown property " + prop_id)
 
     if prop in self._nodedict[node_id]:
         return self._nodedict[node_id][prop]
     else:
-        raise IsyPropertyError("unknown property " + prop_id)
+        raise IsyE.IsyPropertyError("unknown property " + prop_id)
 
 # Set property for a node
 #
@@ -539,24 +557,24 @@ def node_set_prop(self, naddr, prop, val):
 
     (nodetype, node_id) = self._node_get_id(naddr)
     if not node_id:
-        raise LookupError("node_set_prop: unknown node : " + str(naddr) )
+        raise LookupError("node_set_prop: unknown node : " + str(naddr))
 
     prop_id = self._get_control_id(prop)
     if prop_id:
-        # raise TypeError("node_set_prop: unknown prop : " + str(cmd) )
+        # raise TypeError("node_set_prop: unknown prop : " + str(cmd))
         if "readOnly" in self.controls[prop_id] and \
                 self.controls["prop_id"]["readOnly"] == "true":
-            raise IsyPropertyError("readOnly property " + prop_id)
+            raise IsyE.IsyPropertyError("readOnly property " + prop_id)
 
     prop = str(prop)
 
     if "isNumeric" in self.controls[prop_id] and \
             self.controls["prop_id"]["isNumeric"] == "true" and \
             not str(val).isdigit:
-        raise IsyPropertyError("Numeric property " + prop_id)
+        raise IsyE.IsyPropertyError("Numeric property " + prop_id)
 
 #        if not prop in ['ST', 'OL', 'RR']:
-#            raise TypeError("node_set_prop: unknown propery : " + str(prop) )
+#            raise TypeError("node_set_prop: unknown propery : " + str(prop))
 
     # if val:
     #       pass
@@ -567,28 +585,28 @@ def node_set_prop(self, naddr, prop, val):
 
 # to  replace _node_set_prop and _node_comm
 def _node_send(self, naddr, action, prop, *args):
-    """ called by node_comm() or  node_set_prop() after argument validation """
-    #print("_node_send : node=%s prop=%s val=%s" % str(naddr), prop, val)
-    # print ("_node_send : node=" + str(naddr) + " prop=" + prop + " val=" + val )
-    xurl = "/rest/nodes/{!s:}/{!s:}/{!s:}/{!s:}".format(naddr, action, prop, "/".join(str(x) for x in args) )
+    """ called by node_comm() or node_set_prop() after argument validation """
+    # print("_node_send : node=%s prop=%s val=%s" % str(naddr), prop, val)
+    # print ("_node_send : node=" + str(naddr) + " prop=" + prop + " val=" + val)
+    xurl = "/rest/nodes/{!s:}/{!s:}/{!s:}/{!s:}".format(naddr, action, prop, "/".join(str(x) for x in args))
     if self.debug & 0x02 : print("xurl = " + xurl)
     resp = self._getXMLetree(xurl)
     # self._printXML(resp)
     if resp is None or resp.attrib["succeeded"] != 'true':
-        raise IsyResponseError(
-                "Node Cmd/Property Set error : node={!s:} prop={!s:} ".format( naddr, prop ))
+        raise IsyE.IsyResponseError(
+                "Node Cmd/Property Set error : node={!s:} prop={!s:} ".format(naddr, prop))
 
-#def _node_set_prop(self, naddr, prop, val):
+# def _node_set_prop(self, naddr, prop, val):
 #    """ node_set_prop without argument validation """
-#    #print("_node_set_prop : node=%s prop=%s val=%s" % str(naddr), prop, val)
+#    # print("_node_set_prop : node=%s prop=%s val=%s" % str(naddr), prop, val)
 #    print ("_node_set_prop : node=" + str(naddr) + " prop=" + prop +
-#               " val=" + val )
+#               " val=" + val)
 #    xurl = "/rest/nodes/" + naddr + "/set/" + prop + "/" + val
 #    resp = self._getXMLetree(xurl)
 #    self._printXML(resp)
 #    if resp.attrib["succeeded"] != 'true':
-#       raise IsyResponseError("Node Property Set error : node=%s prop=%s val=%s" %
-#               naddr, prop, val )
+#       raise IsyE.IsyResponseError("Node Property Set error : node=%s prop=%s val=%s" %
+#               naddr, prop, val)
 #
 
 #
@@ -614,17 +632,17 @@ def node_comm(self, naddr, cmd, *args):
     (nodetype, node_id) = self._node_get_id(naddr)
     cmd_id = self._get_control_id(cmd)
 
-    #print("self.controls :", self.controls)
-    #print("self.name2control :", self.name2control)
+    # print("self.controls :", self.controls)
+    # print("self.name2control :", self.name2control)
 
     if not node_id:
-        raise LookupError("node_comm: unknown node : {!s}".format(naddr) )
+        raise LookupError("node_comm: unknown node : {!s}".format(naddr))
     print("naddr : ", naddr, " : ", node_id)
 
     if not cmd_id:
-        raise TypeError("node_comm: unknown command : {!s}".format(cmd) )
+        raise TypeError("node_comm: unknown command : {!s}".format(cmd))
 
-    #self._node_comm(node_id, cmd_id, args)
+    # self._node_comm(node_id, cmd_id, args)
     self._node_send(node_id, "cmd", cmd_id, args)
     if not self.eventupdates:
         self._updatenode(naddr)
@@ -632,20 +650,20 @@ def node_comm(self, naddr, cmd, *args):
 #
 # Send command to Node without all the arg checking
 #
-#def _node_comm(self, node_id, cmd_id, *args):
+# def _node_comm(self, node_id, cmd_id, *args):
 #    """ send command to a node or scene without name to ID overhead """
 #    if self.debug & 0x04:
 #       print("_node_comm", node_id, cmd_id)
 #    # rest/nodes/<nodeid>/cmd/<command_name>/<param1>/<param2>/.../<param5>
 #    xurl = ("/rest/nodes/" + node_id + "/cmd/" + cmd_id +
-#       "/" + "/".join(str(x) for x in args) )
+#       "/" + "/".join(str(x) for x in args))
 #
 #    if self.debug & 0x02:
 #           print("xurl = " + xurl)
 #    resp = self._getXMLetree(xurl)
 #    self._printXML(resp)
 #    if resp.attrib["succeeded"] != 'true':
-#       raise IsyResponseError("ISY command error : node_id=" +
+#       raise IsyE.IsyResponseError("ISY command error : node_id=" +
 #           str(node_id) + " cmd=" + str(cmd_id))
 #
 
@@ -667,7 +685,7 @@ def load_node_types(self):
         print("load_node_types")
     typeinfo = self._getXMLetree("/WEB/cat.xml")
     if typeinfo is None:
-          raise IsyCommunicationError("Load Node Type Info Fail : " \
+          raise IsyE.IsyCommunicationError("Load Node Type Info Fail : " \
                               + self.error_str)
     if not hasattr(self, '_nodeCategory') or not isinstance(self._nodeCategory, dict):
         self._nodeCategory = dict()
@@ -677,7 +695,7 @@ def load_node_types(self):
         self._nodeCategory[ncat.attrib["id"]]["name"] = ncat.attrib["name"]
     typeinfo = self._getXMLetree("/WEB/1_fam.xml")
     if typeinfo is None:
-          raise IsyCommunicationError("Load Node Type Info Fail : " \
+          raise IsyE.IsyCommunicationError("Load Node Type Info Fail : " \
                               + self.error_str)
     for ncat in typeinfo.iter('nodeCategory'):
         for subcat in ncat.iter('nodeSubCategory'):
@@ -687,7 +705,7 @@ def load_node_types(self):
             # print("ID : ", ncat.attrib["id"], " : ", subcat.attrib["id"])
             # print("ID  name: ", subcat.attrib["name"])
             self._nodeCategory[ncat.attrib["id"]][subcat.attrib["id"]] = subcat.attrib["name"]
-            #self._printinfo(subcat, "subcat :")
+            # self._printinfo(subcat, "subcat :")
     if self.debug & 0x100:
         print("nodeCategory : ", self._nodeCategory)
         self._printdict(self._nodeCategory)
@@ -738,20 +756,20 @@ def node_iter(self, **kargs):
 
     k = list()
     if "node" in nodetype:
-        # print "adding node"
-        k.extend( sorted(self._nodedict.keys()) )
+        # print("adding node")
+        k.extend(sorted(self._nodedict.keys()))
 
     if "scene" in nodetype:
-        # print "adding scene"
-        k.extend( sorted(self._nodegroups.keys()) )
+        # print("adding scene")
+        k.extend(sorted(self._nodegroups.keys()))
 
     if "folder" in nodetype:
-        # print "adding folder"
-        k.extend( sorted(self._nodefolder.keys()) )
+        # print("adding folder")
+        k.extend(sorted(self._nodefolder.keys()))
 
 #    else:
 #       k = sorted(self._nodedict.keys())
-#       k.extend( sorted(self._nodegroups.keys()))
+#       k.extend(sorted(self._nodegroups.keys()))
 
     for n in k:
         if parent:
@@ -763,7 +781,7 @@ def node_iter(self, **kargs):
 
 
 ## redundant
-#def _updatenode(self, naddr):
+# def _updatenode(self, naddr):
 #    """ update a node's property from ISY device """
 #    xurl = "/rest/nodes/" + self._nodedict[naddr]["address"]
 #    if self.debug & (0x01 & 0x10):
@@ -796,14 +814,14 @@ def _updatenode(self, naddr):
             for k, v in list(child.items()):
                 self._nodedict[naddr][child.tag + "-" + k] = v
 
-        for prop in _nodestat.iter('property'):
-            tprop = dict()
-            for k, v in prop.items():
-                tprop[k] = v
-            if "id" in tprop:
-                self._nodedict[naddr]["property"][tprop["id"]].update(tprop)
+    for prop in _nodestat.iter('property'):
+        tprop = dict()
+        for k, v in prop.items():
+            tprop[k] = v
+        if "id" in tprop:
+            self._nodedict[naddr]["property"][tprop["id"]].update(tprop)
 
-        #self._nodedict[naddr]["property"]["time"] = time.gmtime()
+        # self._nodedict[naddr]["property"]["time"] = time.gmtime()
 
 
 def node_get_notes(self, naddr):
@@ -820,7 +838,7 @@ def node_get_notes(self, naddr):
 
     (nodetype, node_id) = self._node_get_id(naddr)
     if not node_id:
-        raise LookupError("node_get_notes: unknown node : {!s}".format(naddr) )
+        raise LookupError("node_get_notes: unknown node : {!s}".format(naddr))
 
     ret_prop = dict()
 
@@ -856,7 +874,7 @@ def node_enable(self, naddr, enable=True):
     (nodetype, node_id) = self._node_get_id(naddr)
 
     if not node_id:
-        raise LookupError("node_comm: unknown node : " + str(naddr) )
+        raise LookupError("node_comm: unknown node : " + str(naddr))
     # print("naddr : ", naddr, " : ", node_id)
 
     if enable:
@@ -869,8 +887,8 @@ def node_enable(self, naddr, enable=True):
     resp = self._getXMLetree(xurl)
     # self._printXML(resp)
     if resp is None or resp.attrib["succeeded"] != 'true':
-        raise IsyResponseError(
-                "Node Cmd/Property Set error : node={!s:} resp={!s:} ".format( naddr, resp ))
+        raise IsyE.IsyResponseError(
+                "Node Cmd/Property Set error : node={!s:} resp={!s:} ".format(naddr, resp ))
 
 def node_set_powerinfo(self, naddr, deviceClass=None, wattage=None, dcPeriod=None ):
     """
@@ -886,10 +904,10 @@ def node_set_powerinfo(self, naddr, deviceClass=None, wattage=None, dcPeriod=Non
     (nodetype, node_id) = self._node_get_id(naddr)
 
     if not node_id:
-        raise LookupError("node_comm: unknown node : " + str(naddr) )
+        raise LookupError("node_comm: unknown node : " + str(naddr))
 
     if nodetype != "node":
-        raise IsyPropertyError("Can't set powerinfo on non-node devices")
+        raise IsyE.IsyPropertyError("Can't set powerinfo on non-node devices")
 
     if wattage is None:
         wattage = self._nodedict[naddr]['wattage']
@@ -922,12 +940,12 @@ def node_del(self, naddr):
 
     if not node_id:
         raise LookupError(
-            "node_del: {0} not a node ( {1}={2} )".format(
+            "node_del: {0} not a node ( {1}={2} )".format( \
                     naddr, node_id, nodetype))
 
     try:
         r = self._node_remove(node_id)
-    except IsySoapError, se:
+    except IsySoapError as se:
 
         # if error code is 501 then Node did not exist or was already deleted
         # this is messy and needs to change or be removed
@@ -971,7 +989,7 @@ def node_restore_all(self, flag=0):
 
 
 # move from ISYClass
-#def node_rename(self, naddr, name):
+# def node_rename(self, naddr, name):
 #    return self.rename(naddr, name)
 
 def node_restore(self, naddr, flag=0):
@@ -993,7 +1011,7 @@ def node_restore(self, naddr, flag=0):
     (nodetype, node_id) = self._node_get_id(naddr)
 
     if not node_id:
-        raise LookupError("node_restore: unknown node : " + str(naddr) )
+        raise LookupError("node_restore: unknown node : " + str(naddr))
 
     return self.soapcomm("RestoreDevice", node=node_id, flag=flag)
 

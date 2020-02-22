@@ -1,7 +1,8 @@
-from urllib2 import URLError
+from __future__ import print_function
+
 
 __author__ = 'Peter Shipley <peter.shipley@gmail.com>'
-__copyright__ = "Copyright (C) 2015 Peter Shipley"
+__copyright__ = "Copyright (C) 2017 Peter Shipley"
 __license__ = "BSD"
 
 __all__ = [ 'IsyError', 'IsyNodeError',
@@ -12,7 +13,10 @@ __all__ = [ 'IsyError', 'IsyNodeError',
         'IsyRuntimeWarning', 'IsyWarning'
         ]
 
-from urllib2 import URLError, HTTPError
+try:
+    from urllib.error import URLError, HTTPError 
+except ImportError:
+    from urllib2 import URLError, HTTPError
 
 #
 # The Following was lifted from other modules used as examples

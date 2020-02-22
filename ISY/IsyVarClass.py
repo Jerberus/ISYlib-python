@@ -1,12 +1,15 @@
 """ Obj Class Isy veriable entries """
 
+from __future__ import print_function
+
 __author__ = 'Peter Shipley <peter.shipley@gmail.com>'
-__copyright__ = "Copyright (C) 2015 Peter Shipley"
+__copyright__ = "Copyright (C) 2017 Peter Shipley"
 __license__ = "BSD"
 
 
-from ISY.IsyExceptionClass import *
-from ISY.IsyUtilClass import IsySubClass
+# import ISY.IsyExceptionClass as IsyE
+# from .IsyExceptionClass import *
+from .IsyUtilClass import IsySubClass
 
 __all__ = ['IsyVar']
 
@@ -152,7 +155,7 @@ class IsyVar(IsySubClass):
 
     # mathematical operator
     def __add__(self, n):
-        #print "__add__"
+        # print("__add__")
         if isinstance(n, self.__class__):
             return (self._mydict["val"] + n._mydict["val"])
         elif isinstance(n, type(self._mydict["val"])):

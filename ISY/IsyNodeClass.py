@@ -35,15 +35,17 @@ IsyNodeFolders are just for organizing
 
 
 """
+from __future__ import print_function
 
 __author__ = 'Peter Shipley <peter.shipley@gmail.com>'
-__copyright__ = "Copyright (C) 2015 Peter Shipley"
+__copyright__ = "Copyright (C) 2017 Peter Shipley"
 __license__ = "BSD"
 
 import hashlib
 
-from ISY.IsyUtilClass import IsySubClass, val2bool
-from ISY.IsyExceptionClass import *
+from .IsyUtilClass import IsySubClass, val2bool
+#from .IsyExceptionClass import *
+import ISY.IsyExceptionClass as IsyE
 # from IsyClass import *
 # from IsyNodeClass import *
 # from IsyProgramClass import *
@@ -83,12 +85,12 @@ class _IsyNodeBase(IsySubClass):
 
     def _on(self, val, cmd):
         if not str(val).isdigit:
-            raise IsyTypeError("On Command : Bad Value : node=%s val=%s" %
+            raise IsyE.IsyTypeError("On Command : Bad Value : node=%s val=%s" %
                     self._mydict["address"], str(val))
 
         if "property" in self._mydict:
             if "ST" in  self._mydict["property"]:
-                self._mydict["property"]["ST"]["value"] = val
+                self._mydict["property"]["ST"]["value"] = str(val)
                 if self._dimable:
                     self._mydict["property"]["ST"]["formatted"] = "{:.0%}".format(val/255)
                 else:
@@ -120,7 +122,7 @@ class _IsyNodeBase(IsySubClass):
         if "property" in self._mydict:
             # self._mydict["property"]["time"] = 0
             if "ST" in  self._mydict["property"]:
-                self._mydict["property"]["ST"]["value"] = 0
+                self._mydict["property"]["ST"]["value"] = str(0)
                 self._mydict["property"]["ST"]["formatted"] = "Off"
 
     def beep(self):
@@ -190,8 +192,8 @@ class _IsyNodeBase(IsySubClass):
         if self.debug & 0x01:
             print("rename : ", self.__class__.__name__, " : ", newname)
         #if not isinstance(newname, str) or len(newname) == 0:
-        #    print "newname : ", newname
-        #    raise IsyTypeError("rename : name value not str")
+        #    print("newname : ", newname)
+        #    raise IsyE.IsyTypeError("rename : name value not str")
         r = self.isy.soapcomm(cmd,
                         id=self._mydict["address"], name=newname )
 
@@ -214,15 +216,15 @@ class _IsyNodeBase(IsySubClass):
 #
 #       def __getitem__(self, key):
 #           val = dict.__getitem__(self, key)
-#           print 'GET', key
+#           print('GET', key)
 #           return val
 #
 #       def __setitem__(self, key, val):
-#           print 'SET', key, val
+#           print('SET', key, val)
 #           dict.__setitem__(self, key, val)
 #
 #       def __delitem__(self, key):
-#           print 'DEL', key
+#           print('DEL', key)
 #           dict.__delitem__(self, key)
 #
 #       def __repr__(self):
@@ -230,11 +232,11 @@ class _IsyNodeBase(IsySubClass):
 #           return '%s(%s)' % (type(self).__name__, dictrepr)
 #
 #       def get(self, key, default_val):
-#           print 'GET', key, default_val
+#           print('GET', key, default_val)
 #           dict.get(self, key, default_val)
 #
 #       def update(self, *args, **kwargs):
-#           print 'update', args, kwargs
+#           print('update', args, kwargs)
 #           for k, v in dict(*args, **kwargs).iteritems():
 #               self[k] = v
 
@@ -276,10 +278,10 @@ class IsyNode(_IsyNodeBase):
             set_rr:
 
     Bugs: Results are undefined for Node class objects that
-            represent a deleteed node
+            represent a deleted node
 
     """
-    _getlist = ['address', 'enabled', 'formatted',
+    _getlist = ['address', 'enabled', 'formatted', 'family',
             'ELK_ID',
             'parent', 'parent-type',
             'name', 'pnode', 'flag', 'wattage',
@@ -309,7 +311,8 @@ class IsyNode(_IsyNodeBase):
 #            if "node-flag" in self._mydict:
 #                self.update()
 
-        self._hash = hashlib.sha256(self._mydict["address"])
+        # print("addr", self._mydict["address"], type(self._mydict["address"]))
+        self._hash = hashlib.sha256(self._mydict["address"].encode('utf-8'))
 
         if self.debug & 0x01:
             print("Init Node : \"" + self._mydict["address"] + \
@@ -320,7 +323,7 @@ class IsyNode(_IsyNodeBase):
     # Special case from BaseClass due to ST/RR/OL props
     def _get_prop(self, prop):
 
-        # print "IN get_prop ", prop
+        # print("IN get_prop ", prop)
 
         if prop == "formatted":
             prop = "ST"
@@ -334,7 +337,7 @@ class IsyNode(_IsyNodeBase):
         if not prop in self._getlist:
 #           if prop in ['parent', 'parent-type']:
 #               return None
-            raise IsyPropertyError("no property Attribute {!s}".format(prop))
+            raise IsyE.IsyPropertyError("no property Attribute {!s}".format(prop))
 
         # check if we have a property
 
@@ -353,9 +356,9 @@ class IsyNode(_IsyNodeBase):
         if prop in ['ST', 'OL', 'RR']:
             # Scene's do not have property values
 
-            if prop in self._mydict["property"]:
-                # print self._mydict["property"]
-                # print "prop value", prop, value
+            if "property" in self._mydict and prop in self._mydict["property"]:
+                # print(self._mydict["property"])
+                # print("prop value", prop, value)
                 return self._mydict["property"][prop][value]
             else:
                 return None
@@ -380,7 +383,7 @@ class IsyNode(_IsyNodeBase):
 
     def _set_prop(self, prop, new_value):
         """  generic property set """
-        # print "IN set_prop ", prop, new_value
+        # print("IN set_prop ", prop, new_value)
         if self.debug & 0x04:
             print("_set_prop ", prop, " : ", new_value)
 
@@ -392,7 +395,7 @@ class IsyNode(_IsyNodeBase):
                 self.on(new_value)
                 return
             else:
-                raise IsyPropertyError("_set_prop : " \
+                raise IsyE.IsyPropertyError("_set_prop : " \
                     "Invalid property Attribute " + prop)
 
         if prop == 'enable':
@@ -401,7 +404,7 @@ class IsyNode(_IsyNodeBase):
 
         elif prop in ['OL', 'RR']:
             if not str(new_value).isdigit:
-                raise IsyTypeError("Set Property : Bad Value : node=%s prop=%s val=%s" %
+                raise IsyE.IsyTypeError("Set Property : Bad Value : node=%s prop=%s val=%s" %
                             self._mydict["address"], prop, str(new_value))
 
 
@@ -418,7 +421,7 @@ class IsyNode(_IsyNodeBase):
             # self._mydict[prop] = new_value
             pass
         else:
-            #print "_set_prop AttributeError"
+            #print("_set_prop AttributeError")
             raise AttributeError("no Attribute " + prop)
 
 
@@ -539,9 +542,9 @@ class IsyNode(_IsyNodeBase):
 
     # experimental
     def __bool__(self):
-        #print "__nonzero__ call", self._mydict["property"]["ST"]["value"], \
+        #print("__nonzero__ call", self._mydict["property"]["ST"]["value"], \)
         #        " :: ", int(self._mydict["property"]["ST"]["value"])
-        return(bool(self._mydict["property"]["ST"]["value"]) > 0)
+        return(bool(int(self._mydict["property"]["ST"]["value"])) > 0)
 
     # use the node address as the hash value
     def __hash__(self):
@@ -549,11 +552,11 @@ class IsyNode(_IsyNodeBase):
 
 
 #    def __str__(self):
-#       print "__str__ call"
+#       print("__str__ call")
 #       return("my str : " + self._mydict["name"])
 
     def __float__(self):
-        # print "__float__ call"
+        # print("__float__ call")
         return float(int(self._mydict["property"]["ST"]["value"]) / float(255))
 
 class IsyScene(_IsyNodeBase):

@@ -1,13 +1,13 @@
 """ Obj Class Isy Program entries """
 
+from __future__ import print_function
+
 __author__ = 'Peter Shipley <peter.shipley@gmail.com>'
-__copyright__ = "Copyright (C) 2015 Peter Shipley"
+__copyright__ = "Copyright (C) 2017 Peter Shipley"
 __license__ = "BSD"
 
-from ISY.IsyUtilClass import IsySubClass, val2bool
-from ISY.IsyClass import  *
-#fromm ISY.IsyNodeClass import *
-# fromm ISY.IsyVarClass import *
+from .IsyUtilClass import IsySubClass, val2bool
+# from .IsyClass import  *
 
 __all__ = ['IsyProgram']
 
@@ -37,11 +37,11 @@ class IsyProgram(IsySubClass):
 
             get_prog_ts() :     get timestamp
             get_prog_type() :   get Prog type
-            get_prog_init() :   get  inital value for Var
-            set_prog_init(new_value) :  set inital value for Var
+            get_prog_init() :   get  inital value for Prog
+            set_prog_init(new_value) :  set inital value for Prog
             get_prog_value() :  get current value
-            set_prog_value(new_value) : set new value for Var
-            get_prog_id() :     get unique for Var used by ISY
+            set_prog_value(new_value) : set new value for Prog
+            get_prog_id() :     get unique for Prog used by ISY
             get_prog_name() :   get name of var
 
     """
@@ -70,7 +70,7 @@ class IsyProgram(IsySubClass):
         return True
     def set_prog_enable(self, en):
         rval = val2bool(en)
-        #print "set_prog_enable ", rval
+        # print("set_prog_enable ", rval)
         if "enabled" in self._mydict:
             if rval:
                self.isy.prog_comm(self._mydict['id'], "enable")
@@ -80,6 +80,18 @@ class IsyProgram(IsySubClass):
         return rval
     enabled = property(get_prog_enable, set_prog_enable)
 
+    def run(self):
+        self.isy.prog_comm(self._mydict['id'], "run")
+
+    def stop(self):
+        self.isy.prog_comm(self._mydict['id'], "stop")
+
+    def runThen(self):
+        self.isy.prog_comm(self._mydict['id'], "runThen")
+
+    def runElse(self):
+        self.isy.prog_comm(self._mydict['id'], "runElse")
+
     def get_prog_runatstart(self):
         """ check property runAtStartup (bool) """
         #en = self._get_prop("runAtStartup")
@@ -87,7 +99,7 @@ class IsyProgram(IsySubClass):
         return bool(self._mydict['runAtStartup'] == "true")
     def set_prog_runatstart(self, en):
         rval = val2bool(en)
-        #print "set_prog_enable ", rval
+        # print("set_prog_enable ", rval)
         if rval:
            self.isy.prog_comm(self._mydict['id'], "runAtStartup")
         else:

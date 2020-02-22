@@ -2,17 +2,17 @@
 """
         Ugly...
 
-        work in progress, ment as proof of concept
+        work in progress, meant as proof of concept
 
         needs rewrite or cleanup
 """
+from __future__ import print_function
+
 __author__ = 'Peter Shipley <peter.shipley@gmail.com>'
-__copyright__ = "Copyright (C) 2015 Peter Shipley"
+__copyright__ = "Copyright (C) 2017 Peter Shipley"
 __license__ = "BSD"
 
-
 import time
-
 import sys
 # import os
 # import traceback
@@ -25,8 +25,8 @@ import select
 
 import xml.etree.ElementTree as ET
 
-from ISY.IsyEventData import EVENT_CTRL
-from ISY._isy_printevent import _print_event
+from .IsyEventData import EVENT_CTRL
+from ._isy_printevent import _print_event
 import collections
 
 try:
@@ -41,7 +41,7 @@ class ISYEvent(object):
 
 
     def __init__(self, addr=None, **kwargs):
-        # print  "ISYEvent ", self.__class__.__name__
+        # print( "ISYEvent ", self.__class__.__name__)
 
         self.debug = kwargs.get("debug", 0)
         self.connect_list = []
@@ -53,7 +53,7 @@ class ISYEvent(object):
         self.process_func = kwargs.get("process_func", _print_event)
         self.process_func_arg = kwargs.get("process_func_arg", None)
 
-	print "_print_event", _print_event
+        # print("_print_event", _print_event)
         if self.process_func:
             assert isinstance(self.process_func, collections.Callable), \
                     "process_func Arg must me callable"
@@ -70,8 +70,9 @@ class ISYEvent(object):
     def set_process_func(self, func, arg):
 
         if func:
-	    # if self.debug & 0x01:
-	    print "set_process_func", func
+            # if self.debug & 0x01:
+            if self.debug & 0x01:
+                print("set_process_func", func)
             self.process_func = func
             assert isinstance(self.process_func, collections.Callable), \
                     "process_func Arg must me callable"
@@ -84,21 +85,21 @@ class ISYEvent(object):
 
 
     def _finish(self):
-        # print "Finishing... ", self.__class__.__name__
+        # print("Finishing... ", self.__class__.__name__)
         for s in self.connect_list:
             s.disconnect()
 
         del self.connect_list[:]
         if self.isy:
             self.isy._isy_event = None
-        # print "Finished... ", self.__class__.__name__
+        # print("Finished... ", self.__class__.__name__)
 
 #    def __del__(self):
-#       print "\n\n\n>>>>>>>>>__del__ ", \
-#          self.__class__.__name__, "<<<<<<<<<<<<<\n\n\n"
+#       print("\n\n\n>>>>>>>>>__del__ ", \
+#          self.__class__.__name__, "<<<<<<<<<<<<<\n\n\n")
 
     def _stop_event_loop(self):
-        # print self.__class__.__name__
+        # print(self.__class__.__name__)
         self._shut_down = 1
 
     # <?xml version="1.0" encoding="UTF-8"?><s:Envelope><s:Body>
@@ -111,20 +112,21 @@ class ISYEvent(object):
             receive events from
 
             named args:
-                addr = IP address  or hostname of isydevice
+                addr = IP address or hostname of isydevice
                 userl = isy admin login
                 userp = isy admin password
                 level = debug level
         """
 
-        addr  = kwargs.get("addr", None)
+        addr = kwargs.get("addr", None)
 
         if self.debug & 0x01:
             print("subscribe ", addr)
 
         if addr in self.connect_list:
-            # print "addr :", addr
-            print "connect_list :", self.connect_list
+            # print("addr :", addr)
+            if self.debug & 0x01:
+                print("connect_list :", self.connect_list)
             warnstr = str("Duplicate addr : {0}").format(addr)
             warnings.warn(warnstr, RuntimeWarning)
             return
@@ -149,7 +151,7 @@ class ISYEvent(object):
             this function removes an ISY device to the list of devices to
             receive events from
 
-            arg: IP address  or hostname of isydevice
+            arg: IP address or hostname of isydevice
         """
         remote_ip = socket.gethostbyname(addr)
         if not addr in self.connect_list:
@@ -168,14 +170,14 @@ class ISYEvent(object):
             _process_event : takes XML from the events stream
                 coverts to a dict and passed to process_func provided
         """
-        #print "-"
+        #print("-")
 
         l = conn_obj.event_rf.readline()
         if len(l) == 0:
             raise IOError("bad read form socket")
             # conn_obj._opensock(self.authtuple[0])
             # conn_obj._subscribe()
-        # print "_process_event = ", l
+        # print("_process_event = ", l)
         if (l[:5] != 'POST '):
             print("Stream Sync Error")
             for x in range(10):
@@ -190,12 +192,12 @@ class ISYEvent(object):
             l = conn_obj.event_rf.readline()
             if len(l) == 2:
                 break
-            # print "HEADER : ", l
+            # print("HEADER : ", l)
             if l[:15].upper() == "CONTENT-LENGTH:":
                 l.rstrip('\r\n')
                 data_len = int(l.split(':')[1])
 
-        # print "HEADER data_len ", data_len
+        # print("HEADER data_len ", data_len)
 
         # data = conn_obj.event_rf.readread(data_len)
         data_remaining = data_len
@@ -219,7 +221,7 @@ class ISYEvent(object):
             data = data.replace('<=', '&lt;=')
 
         if data.find('< ') >= 0:
-            # print "< HACK"
+            # print("< HACK")
             data = data.replace('< ', '&lt; ')
 
         if data.find('<NULL>'):
@@ -227,22 +229,22 @@ class ISYEvent(object):
 
         # ev = ET.fromstring(data)
         try:
-            ev =  ET.fromstring(data)
+            ev = ET.fromstring(data)
         except ET.ParseError as e:
-            print "Etree ParseError "
-            print "data = ", data,
-            print "e.message = ", e.message
+            print("Etree ParseError ")
+            print("data = ", data,)
+            print("e.message = ", e.message)
             raise
 
-        #print "_process_event ", data, "\n\n"
+        #print("_process_event ", data, "\n\n")
 
 
         ddat = self.et2d(ev)
 
-        # print ddat
+        # print(ddat)
         #if ddat[control][0] == "_":
         #       return
-        # print ddat
+        # print(ddat)
         return(ddat, data)
         #return(ddat)
 
@@ -259,7 +261,7 @@ class ISYEvent(object):
             if an invalid arg is passed a empty dict is retrurned
 
 
-            arg: ETree Element  obj
+            arg: ETree Element obj
 
             returns: a dict obj
         """
@@ -305,7 +307,7 @@ class ISYEvent(object):
         children = list(et)
         if et.attrib:
             for k, v in list(et.items()):
-                d[et.tag + "-" + k] =  v
+                d[et.tag + "-" + k] = v
         if children:
             for child in children:
                 if child.tag in d:
@@ -361,8 +363,8 @@ class ISYEvent(object):
             #except Exception:
                 #print("Unexpected Error:", sys.exc_info()[0])
                 #traceback.print_stack()
-                #print repr(traceback.extract_stack())
-                #print repr(traceback.format_stack())
+                #print(repr(traceback.extract_stack())
+                #print(repr(traceback.format_stack())
             finally:
                 pass
 
@@ -397,11 +399,11 @@ class ISYEvent(object):
                 r, _, e = select.select(self.connect_list, [], [], poll_interval)
                 for rs in r:
                     d, x = self._process_event(rs)
-                    # print "d :", type(d)
+                    # print("d :", type(d)
                     if self.debug & 0x0400:
-                        print "---------"
-                        print "event_loop= ", x
-                        print "event_loop= ", d
+                        print("---------")
+                        print("event_loop= ", x)
+                        print("event_loop= ", d)
                         sys.stdout.flush()
                     if ignorelist:
                         if d["control"] in ignorelist:
@@ -415,7 +417,7 @@ class ISYEvent(object):
                 print("I/O error({0}): {1}".format(e.errno, e.strerror))
                 self.reconnect()
 #           except Exception:
-#               print "Unexpected error:", sys.exc_info()[0]
+#               print("Unexpected error:", sys.exc_info()[0])
             finally:
                 pass
 
@@ -432,7 +434,7 @@ class ISYEventConnection(object):
         self.error = 0
         self.debug = isyevent.debug
 
-        # print "authtuple : ", type(authtuple), authtuple
+        # print("authtuple : ", type(authtuple), authtuple)
         self.authtuple = authtuple
 
     def __hash__(self):
@@ -446,7 +448,7 @@ class ISYEventConnection(object):
 
     def __del__(self):
         self.disconnect()
-        #print "\n\n\n>>>>>>>>>__del__ ", self.__class__.__name__, "<<<<<<<<<<<<<\n\n\n"
+        #print("\n\n\n>>>>>>>>>__del__ ", self.__class__.__name__, "<<<<<<<<<<<<<\n\n\n")
 
     def __eq__(self, other):
         if isinstance(other, str):
@@ -460,7 +462,7 @@ class ISYEventConnection(object):
         return self.event_sock.fileno()
 
     def reconnect(self):
-        # print "--reconnect to self.authtuple[0]--"
+        # print("--reconnect to self.authtuple[0]--")
         self.error += 1
 
         retry = True
@@ -470,7 +472,8 @@ class ISYEventConnection(object):
                 self.connect()
                 retry = False
             except socket.error as e:
-                print("socket error - reconnecting({0}): {1}".format(e.errno, e.strerror))
+                if self.debug & 0x01:
+                    print("socket error - reconnecting({0}): {1}".format(e.errno, e.strerror))
                 time.sleep(1)
                 retry = True
 
@@ -509,7 +512,14 @@ class ISYEventConnection(object):
 
         # self.event_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        server_address = (self.authtuple[0], 80)
+        host_port = 80
+
+        addr_l = self.authtuple[0].split(":")
+        host_addr=addr_l[0]
+        if len(addr_l) > 1:
+            host_port=addr_l[1]
+        server_address = (host_addr, host_port)
+
         self.event_sock = socket.create_connection(server_address, 10)
         self.event_sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
 
@@ -520,12 +530,12 @@ class ISYEventConnection(object):
         if hasattr(socket, 'TCP_KEEPIDLE'):
            self.event_sock.setsockopt(socket.SOL_TCP, socket.TCP_KEEPIDLE, 10)
 
-        #sn =  sock.getsockname()
+        #sn = sock.getsockname()
         #self.myip = sn[0]
-        #print "P ", self.myip
+        #print("P ", self.myip)
 
         #self.myurl = "http://{0}:{1}/".format(sn[0], self.server_address[1])
-        #print "myurl ", self.myurl
+        #print("myurl ", self.myurl)
 
         if fcntl is not None and hasattr(fcntl, 'FD_CLOEXEC'):
             flags = fcntl.fcntl(self.event_sock.fileno(), fcntl.F_GETFD)

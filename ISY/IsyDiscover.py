@@ -1,8 +1,11 @@
 #!/usr/local/bin/python
 
 """Simple Python lib discovering ISY devices with Upnp  """
+
+from __future__ import print_function
+
 __author__ = 'Peter Shipley <peter.shipley@gmail.com>'
-__copyright__ = "Copyright (C) 2015 Peter Shipley"
+__copyright__ = "Copyright (C) 2017 Peter Shipley"
 __license__ = "BSD"
 
 
@@ -12,21 +15,20 @@ __license__ = "BSD"
 # DOES NOT PROPERLY HANDLE XML namespace FOR Upnp
 #
 
+
 import socket
 import struct
 import sys
+import platform
 import xml.etree.ElementTree as ET
 # import base64
-if sys.hexversion < 0x3000000:
-    import urllib2 as URL
-else:
-    import urllib.request as URL
-
+import signal
 import re
+
 # from pprint import pprint
 
+import requests
 
-import signal
 
 __all__ = ['isy_discover']
 
@@ -81,7 +83,7 @@ def isy_discover(**kwargs):
     def isy_upnp(ddata):
 
         if ddata.debug:
-            print("isy_upnp CalL")
+            print("isy_upnp Call")
 
             print("isy_upnp debug=%s\ttimeout=%s\tpassive=%s\tcount=%s\n" % \
                     (ddata.debug, ddata.timeout, ddata.passive, ddata.count))
@@ -89,35 +91,42 @@ def isy_discover(**kwargs):
         multicast_group = '239.255.255.250'
         multicast_port = 1900
         server_address = ('', multicast_port)
+        use_addr = socket.INADDR_ANY
 
+        if platform.system() == 'Windows':
+            use_addr = socket.inet_aton(socket.gethostbyname(socket.gethostname()))
 
-        # Create the socket
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(server_address)
-        group = socket.inet_aton(multicast_group)
-        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+
+        mreq = struct.pack('4sL', socket.inet_aton(multicast_group), use_addr)
+        # mreq = struct.pack('4sL', socket.inet_aton(multicast_group), socket.INADDR_ANY)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 3)
+        sock.settimeout(ddata.timeout)
+        sock.bind(server_address)
 
         if not ddata.passive:
             probe = "M-SEARCH * HTTP/1.1\r\nHOST:239.255.255.250:1900\r\n" \
                 "MAN:\"ssdp.discover\"\r\nMX:1\r\n"  \
                 "ST:urn:udi-com:device:X_Insteon_Lighting_Device:1\r\n\r\n"
 
-            #print "sending : ", probe
+            # print("sending : ", probe)
             sock.sendto(probe.encode('utf-8'), (multicast_group, multicast_port))
-
 
         while  len(ddata.upnp_urls) < ddata.count:
 
             if ddata.debug:
                 print("while IN")
 
+            # try:
             data, address = sock.recvfrom(1024)
+            # except socket.timeout:
+            #      raise TIMEOUT ("Timed Out")
 
             #.decode('UTF-8')
             if sys.hexversion >= 0x3000000:
-                data = str( data, encoding='utf8')
+                data = str(data, encoding='utf8')
 
             if ddata.debug:
                 print('received %s bytes from %s' % (len(data), address))
@@ -127,7 +136,7 @@ def isy_discover(**kwargs):
             # only ISY devices
             # if should I look for
             # SERVER:UCoS, UPnP/1.0, UDI/1.0
-            if not "X_Insteon_Lighting_" in data:
+            if "X_Insteon_Lighting_" not in data:
                 continue
 
             upnp_packet = data.splitlines()
@@ -144,12 +153,12 @@ def isy_discover(**kwargs):
                         # uniq the list
                         ddata.upnp_urls = list(set(ddata.upnp_urls))
 
-        #print "returning ", ddata.upnp_urls
+        # print("returning ", ddata.upnp_urls)
 
 
     old_handler = signal.signal(signal.SIGALRM, isy_discover_timeout)
 
-    #isy_upnp(ddata)
+    # isy_upnp(ddata)
     try:
         signal.alarm(ddata.timeout)
         isy_upnp(ddata)
@@ -171,30 +180,29 @@ def isy_discover(**kwargs):
 
 
     for s in ddata.upnp_urls:
-        req = URL.Request(s)
-        resp = URL.urlopen(req)
+        resp = requests.get(s)
 
-        pagedata = resp.read().decode('utf-8')
+        pagedata = resp.text.decode('utf-8')
         resp.close()
 
         # does this even work ??
         # ET.register_namespace("isy", 'urn:schemas-upnp-org:device-1-0')
-        #print "_namespace_map = {0}".format(ET._namespace_map)
+        # print("_namespace_map = {0}".format(ET._namespace_map))
 
         # this is a hack to deal with namespace:
         pa = re.sub(r" xmlns=\"urn:schemas-upnp-org:device-1-0\"", "", pagedata)
         # grok the XML from the Upnp discovered server
         xmlres = ET.fromstring(pa)
 
-        # print "_namespace_map : ",
+        # print("_namespace_map : ",)
         # pprint(ET._namespace_map)
 
-        #if hasattr(xmlres, 'tag'):
+        # if hasattr(xmlres, 'tag'):
         #    xmlns = re.search('\{(.*)\}', xmlres.tag).group(1)
-        #else:
+        # else:
         #    continue
 
-        #print "xmlns ", xmlns
+        # print("xmlns ", xmlns)
 
         isy_res = dict()
 
@@ -240,5 +248,5 @@ if __name__ == "__main__":
 
 #    res = isy_discover(count=1, timeout=10, passive=0)
 #    for h in res:
-#       print "res : ", h
+#       print("res : ", h)
     exit(0)
